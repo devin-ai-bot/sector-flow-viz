@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { SECTOR_ETFS, TIME_PERIODS } from './data/sectors'
+import { SECTOR_ETFS, TIME_PERIODS, CHART_COLORS } from './data/sectors'
 import { fetchSectorData } from './data/api'
 import SankeyChart from './components/SankeyChart'
 import HeatmapChart from './components/HeatmapChart'
@@ -18,56 +18,63 @@ function App() {
   }, [period])
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">US Sector Flow Visualization</h1>
-        <p className="text-gray-400">美股板块资金流动可视化</p>
+    <div className="min-h-screen bg-[#0a0a0a] text-[#f5f5f0]">
+      {/* Header */}
+      <header className="border-b border-[#2a2a2a] px-6 py-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-2xl font-medium tracking-tight">US Sector Flow</h1>
+          <p className="text-[#a0a0a0] mt-1 text-sm">美股板块资金流动可视化</p>
+        </div>
       </header>
 
       {/* Time Period Selector */}
-      <div className="flex gap-4 mb-8">
-        {Object.entries(TIME_PERIODS).map(([key, value]) => (
-          <button
-            key={key}
-            onClick={() => setPeriod(key)}
-            className={`px-4 py-2 border transition-colors ${
-              period === key
-                ? 'border-[#d4a5ff] text-[#d4a5ff]'
-                : 'border-gray-700 text-gray-400 hover:border-gray-500'
-            }`}
-          >
-            {value.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-2 gap-6">
-        {loading ? (
-          <div className="col-span-2 text-center py-12 text-gray-500">
-            Loading data...
-          </div>
-        ) : (
-          <>
-            <SankeyChart data={data} />
-            <HeatmapChart data={data} />
-          </>
-        )}
-      </div>
-
-      {/* Sector Grid */}
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold mb-4">Sectors</h3>
-        <div className="grid grid-cols-5 gap-4">
-          {Object.entries(SECTOR_ETFS).map(([symbol, info]) => (
-            <div key={symbol} className="bg-gray-800 p-4 rounded">
-              <div className="text-2xl font-bold" style={{ color: info.color }}>{symbol}</div>
-              <div className="text-sm text-gray-400">{info.name}</div>
-              <div className="text-xs text-gray-500">{info.nameCN}</div>
-            </div>
+      <div className="border-b border-[#2a2a2a] px-6 py-4">
+        <div className="max-w-7xl mx-auto flex justify-center gap-2">
+          {Object.entries(TIME_PERIODS).map(([key, value]) => (
+            <button
+              key={key}
+              onClick={() => setPeriod(key)}
+              className={`px-4 py-2 text-sm rounded transition-all duration-200 ${
+                period === key
+                  ? 'bg-[#1a1a1a] text-[#d4a5ff] border border-[#d4a5ff]'
+                  : 'bg-transparent text-[#666666] border border-[#2a2a2a] hover:border-[#3a3a3a] hover:text-[#a0a0a0]'
+              }`}
+            >
+              {value.label}
+            </button>
           ))}
         </div>
       </div>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {loading ? (
+          <div className="flex items-center justify-center py-24 text-[#a0a0a0]">
+            <div className="animate-pulse">Loading...</div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Sankey Chart */}
+            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+              <h3 className="text-lg font-medium mb-4">Money Flow</h3>
+              <SankeyChart data={data} />
+            </div>
+
+            {/* Heatmap */}
+            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+              <h3 className="text-lg font-medium mb-4">Returns Heatmap</h3>
+              <HeatmapChart data={data} />
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-[#2a2a2a] px-6 py-4 mt-8">
+        <div className="max-w-7xl mx-auto text-center text-xs text-[#666666]">
+          Data updates daily via GitHub Actions · Last update: {new Date().toLocaleDateString()}
+        </div>
+      </footer>
     </div>
   )
 }
