@@ -1,3 +1,10 @@
 name = "sector-flow-viz"
-compatibility_date = "2024-01-01"
-pages_build_output_dir = "dist"
+main = "worker/index.js"
+compatibility_date = "2024-03-06"
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[[env.production.kv_namespaces]]
+binding = "SECTOR_DATA"
+id = "sector-flow-viz-kv"
