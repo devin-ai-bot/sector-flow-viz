@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-03-06T18:33:00.000Z",
+  "sectors": {
+    "XLK": {"symbol": "XLK", "name": "Technology", "close": 185.42, "volume": 12500000, "change": 2.15, "moneyFlow": 498000000, "returns": [0.01, -0.02, 0.03, 0.01, -0.01]},
+    "XLF": {"symbol": "XLF", "name": "Financials", "close": 42.18, "volume": 18200000, "change": 1.32, "moneyFlow": 101000000, "returns": [0.005, 0.01, -0.005, 0.02, 0.01]},
+    "XLV": {"symbol": "XLV", "name": "Healthcare", "close": 138.92, "volume": 8500000, "change": -0.45, "moneyFlow": -53000000, "returns": [-0.01, 0.005, -0.02, 0.01, -0.005]},
+    "XLE": {"symbol": "XLE", "name": "Energy", "close": 92.34, "volume": 11200000, "change": -1.82, "moneyFlow": -188000000, "returns": [-0.02, -0.01, 0.015, -0.03, 0.01]},
+    "XLI": {"symbol": "XLI", "name": "Industrials", "close": 118.65, "volume": 9800000, "change": 0.78, "moneyFlow": 91000000, "returns": [0.01, 0.005, -0.01, 0.02, 0.005]},
+    "XLP": {"symbol": "XLP", "name": "Consumer Staples", "close": 78.23, "volume": 7200000, "change": 0.25, "moneyFlow": 14000000, "returns": [0.002, 0.001, -0.003, 0.004, 0.002]},
+    "XLU": {"symbol": "XLU", "name": "Utilities", "close": 68.91, "volume": 5100000, "change": 1.12, "moneyFlow": 39000000, "returns": [0.008, 0.005, 0.002, -0.001, 0.006]},
+    "XLRE": {"symbol": "XLRE", "name": "Real Estate", "close": 42.87, "volume": 8900000, "change": -1.35, "moneyFlow": -51000000, "returns": [-0.015, 0.005, -0.01, -0.005, 0.008]},
+    "XLC": {"symbol": "XLC", "name": "Communication", "close": 72.45, "volume": 10500000, "change": 2.85, "moneyFlow": 217000000, "returns": [0.02, 0.01, 0.015, -0.005, 0.025]},
+    "XLB": {"symbol": "XLB", "name": "Materials", "close": 88.92, "volume": 6800000, "change": 0.52, "moneyFlow": 31000000, "returns": [0.005, -0.002, 0.008, 0.01, -0.003]}
+  }
+}

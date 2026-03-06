@@ -1,65 +1,58 @@
 /**
  * Sector Flow API Client
- * Connects to Cloudflare Workers backend
+ * Reads data from static JSON (updated daily by GitHub Actions)
  */
 
 import { SECTOR_ETFS } from './sectors';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
-
 /**
- * Fetch sector data for visualization
+ * Fetch sector data from static JSON
  * @param {string} period - day, week, month, quarter, year
  */
 export async function fetchSectorData(period = 'day') {
-  // Try to fetch from API first
   try {
-    const [sectorsRes, flowsRes, heatmapRes] = await Promise.all([
-      fetch(`${API_BASE}/api/sectors`),
-      fetch(`${API_BASE}/api/flows?period=${period}`),
-      fetch(`${API_BASE}/api/heatmap?period=${period}`)
-    ]);
-
-    if (sectorsRes.ok && flowsRes.ok && heatmapRes.ok) {
-      const sectorsData = await sectorsRes.json();
-      const flowsData = await flowsRes.json();
-      const heatmapData = await heatmapRes.json();
-
-      return {
-        sectors: mergeSectorData(sectorsData.sectors, flowsData.flows),
-        heatmap: heatmapData.data
-      };
-    }
+    const response = await fetch('/data/sectors.json');
+    if (!response.ok) throw new Error('Failed to fetch data');
+    
+    const json = await response.json();
+    return transformData(json, period);
   } catch (error) {
-    console.log('API not available, using mock data');
+    console.error('API Error:', error);
+    return generateMockData(period);
   }
-
-  // Fallback to mock data
-  return generateMockData(period);
 }
 
 /**
- * Merge sector info with flow data
+ * Transform API response to chart format
  */
-function mergeSectorData(sectors, flows) {
-  const merged = {};
+function transformData(json, period) {
+  const { sectors } = json;
   
-  sectors.forEach(s => {
-    merged[s.symbol] = {
-      ...s,
-      moneyFlow: 0,
-      change: 0
+  const sectorsData = {};
+  const heatmap = [];
+  
+  Object.entries(sectors).forEach(([symbol, data]) => {
+    const info = SECTOR_ETFS[symbol] || {};
+    
+    sectorsData[symbol] = {
+      symbol,
+      name: data.name,
+      nameCN: info.nameCN || data.name,
+      color: info.color || '#888',
+      close: data.close,
+      volume: data.volume,
+      change: data.change,
+      moneyFlow: data.moneyFlow
     };
+    
+    heatmap.push({
+      symbol,
+      name: data.name,
+      returns: data.returns || []
+    });
   });
   
-  flows.forEach(f => {
-    if (merged[f.symbol]) {
-      merged[f.symbol].moneyFlow = f.moneyFlow;
-      merged[f.symbol].change = f.change;
-    }
-  });
-  
-  return merged;
+  return { sectors: sectorsData, heatmap };
 }
 
 /**
