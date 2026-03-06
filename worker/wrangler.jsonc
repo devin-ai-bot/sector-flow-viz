@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sector-flow-viz",
+  "main": "index.js",
+  "compatibility_date": "2025-02-04",
+  "observability": {
+    "enabled": true
+  },
+  "kv_namespaces": [
+    {
+      "binding": "SECTOR_CACHE",
+      "id": "b028106ade7b451aa3317e43f098c90b"
+    }
+  ]
+}
