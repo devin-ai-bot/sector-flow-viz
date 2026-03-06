@@ -3,4 +3,9 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  base: '/sector-flow-viz/',
+  build: {
+    outDir: 'dist',
+    sourcemap: false
+  }
 })
