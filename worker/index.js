@@ -109,8 +109,8 @@ async function handleHeatmap(url, env, headers) {
 }
 
 async function fetchSectorFlows(period, date) {
-  const symbols = Object.keys(SECTOR_ETFS).filter(s => s !== 'SPY');
-  
+  const symbols = Object.keys(SECTOR_ETFS);
+
   // Calculate money flow for each sector
   const flows = [];
   
@@ -134,7 +134,7 @@ async function fetchSectorFlows(period, date) {
 }
 
 async function fetchSectorHeatmap(period, date) {
-  const symbols = Object.keys(SECTOR_ETFS).filter(s => s !== 'SPY');
+  const symbols = Object.keys(SECTOR_ETFS);
   const days = period === 'day' ? 30 : period === 'week' ? 12 : period === 'month' ? 12 : period === 'quarter' ? 8 : 5;
   
   const data = symbols.map(symbol => {

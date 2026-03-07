@@ -1,124 +1,194 @@
 /**
  * Sankey Chart Component
- * Visualizes money flow using ECharts
+ * Three-layer structure:  outflow sectors → MARKET → inflow sectors
+ *
+ * Node depth is auto-assigned by ECharts based on link topology:
+ *   depth 0 — sectors with only outgoing links  (pure outflow)
+ *   depth 1 — MARKET node (receives outflow, distributes to inflow)
+ *   depth 2 — sectors with only incoming links  (pure inflow)
+ *
+ * Link width ∝ money flow value (millions USD).
  */
 
 import { useMemo } from 'react';
-import { SECTOR_ETFS } from '../data/sectors';
+import ReactECharts from 'echarts-for-react';
+
+function formatFlow(v) {
+  const abs = Math.abs(v);
+  const sign = v >= 0 ? '+' : '-';
+  if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `${sign}${Math.round(abs / 1e6)}M`;
+  return `${sign}${Math.round(abs / 1e3)}K`;
+}
 
 const SankeyChart = ({ data }) => {
-  const chartData = useMemo(() => {
-    if (!data?.sectors) return null;
-    
-    const sectors = Object.values(data.sectors);
-    
-    // Create nodes
-    const nodes = sectors.map(s => ({
-      name: s.symbol,
-      itemStyle: { color: s.color },
-      label: { 
-        show: true, 
-        position: 'right',
-        color: '#a0a0a0',
-        fontSize: 11
-      }
-    }));
-    
-    // Calculate flows based on money flow
-    const flows = [];
-    const sortedByFlow = [...sectors].sort((a, b) => b.moneyFlow - a.moneyFlow);
-    
-    // Create flows from inflow sectors to outflow sectors
-    const inflows = sortedByFlow.filter(s => s.moneyFlow > 0);
-    const outflows = sortedByFlow.filter(s => s.moneyFlow < 0);
-    
-    // Simplified: show bar chart style
-    return { sectors: sortedByFlow, inflows, outflows };
+  const { option, summary } = useMemo(() => {
+    if (!data?.sectors) return {};
+
+    const sectors  = Object.values(data.sectors);
+    const outflows = sectors.filter(s => s.moneyFlow < 0).sort((a, b) => a.moneyFlow - b.moneyFlow);
+    const inflows  = sectors.filter(s => s.moneyFlow > 0).sort((a, b) => b.moneyFlow - a.moneyFlow);
+
+    if (!outflows.length || !inflows.length) return {};
+
+    const totalOut = outflows.reduce((s, x) => s + Math.abs(x.moneyFlow), 0);
+    const totalIn  = inflows.reduce((s, x) => s + x.moneyFlow, 0);
+
+    // Suffix inflow sector names to keep ECharts node names unique
+    // (a sector that has the same symbol on both sides would break the chart)
+    const inflowKey = s => s.symbol + '\u200b'; // zero-width space suffix
+
+    const nodes = [
+      ...outflows.map(s => ({
+        name: s.symbol,
+        itemStyle: { color: '#ef4444', borderColor: '#7f1d1d' },
+        label: { color: '#fca5a5', fontFamily: 'monospace', fontSize: 12 },
+      })),
+      {
+        name: 'MARKET',
+        itemStyle: { color: '#374151', borderColor: '#4b5563' },
+        label: {
+          color: '#9ca3af',
+          fontSize: 13,
+          fontWeight: 'bold',
+          fontFamily: 'sans-serif',
+        },
+      },
+      ...inflows.map(s => ({
+        name: inflowKey(s),
+        itemStyle: { color: '#22c55e', borderColor: '#14532d' },
+        label: { color: '#86efac', fontFamily: 'monospace', fontSize: 12 },
+      })),
+    ];
+
+    const links = [
+      ...outflows.map(s => ({
+        source: s.symbol,
+        target: 'MARKET',
+        value: Math.max(1, Math.round(Math.abs(s.moneyFlow) / 1e6)),
+      })),
+      ...inflows.map(s => ({
+        source: 'MARKET',
+        target: inflowKey(s),
+        value: Math.max(1, Math.round(s.moneyFlow / 1e6)),
+      })),
+    ];
+
+    const opt = {
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: '#1a1a1a',
+        borderColor: '#333',
+        textStyle: { color: '#e5e7eb', fontSize: 12, fontFamily: 'monospace' },
+        formatter: params => {
+          if (params.dataType === 'edge') {
+            const src = params.data.source.replace(/\u200b/g, '');
+            const tgt = params.data.target.replace(/\u200b/g, '');
+            return `${src} → ${tgt}<br/><b>${params.data.value}M</b>`;
+          }
+          const name = params.name.replace(/\u200b/g, '');
+          return `<b>${name}</b>`;
+        },
+      },
+      series: [
+        {
+          type: 'sankey',
+          orient: 'horizontal',
+          left: '1%',
+          right: '8%',
+          top: 24,
+          bottom: 16,
+          nodeWidth: 14,
+          nodeGap: 10,
+          data: nodes,
+          links,
+          emphasis: { focus: 'adjacency' },
+          // depth-based styling: left links red, right links green
+          levels: [
+            {
+              depth: 0,
+              itemStyle: { color: '#ef4444', borderColor: '#7f1d1d' },
+              lineStyle: { color: 'source', opacity: 0.45 },
+            },
+            {
+              depth: 1,
+              itemStyle: { color: '#374151', borderColor: '#4b5563' },
+              lineStyle: { color: 'target', opacity: 0.45 },
+            },
+            {
+              depth: 2,
+              itemStyle: { color: '#22c55e', borderColor: '#14532d' },
+            },
+          ],
+          lineStyle: { curveness: 0.5 },
+          label: {
+            formatter: p => p.name.replace(/\u200b/g, ''),
+          },
+        },
+      ],
+    };
+
+    return {
+      option: opt,
+      summary: { totalIn, totalOut, net: totalIn - totalOut },
+    };
   }, [data]);
 
-  if (!chartData) {
+  if (!option) {
     return (
-      <div className="flex items-center justify-center h-64 text-[#666666]">
+      <div className="flex items-center justify-center h-64 text-[#555]">
         Loading...
       </div>
     );
   }
 
-  const maxFlow = Math.max(...chartData.sectors.map(s => Math.abs(s.moneyFlow)));
-
   return (
-    <div className="space-y-2">
+    <div>
       {/* Legend */}
-      <div className="flex gap-4 mb-4 text-xs">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-[#d4a5ff]" />
-          <span className="text-[#a0a0a0]">Inflow</span>
+      <div className="flex items-center gap-6 mb-2 text-xs text-[#888]">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-sm bg-[#ef4444]" />
+          <span>净流出板块</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-[#ffb74d]" />
-          <span className="text-[#a0a0a0]">Outflow</span>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-sm bg-[#374151]" />
+          <span>MARKET（中转节点）</span>
         </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-sm bg-[#22c55e]" />
+          <span>净流入板块</span>
+        </div>
+        <span className="ml-auto text-[#444]">节点宽度 ∝ 资金量</span>
       </div>
-      
-      {/* Flow Bars */}
-      {chartData.sectors.map(sector => {
-        const isPositive = sector.moneyFlow > 0;
-        const width = Math.min((Math.abs(sector.moneyFlow) / maxFlow) * 100, 100);
-        
-        return (
-          <div key={sector.symbol} className="flex items-center gap-3 group">
-            {/* Symbol */}
-            <div className="w-12 flex items-center gap-1.5">
-              <div 
-                className="w-1.5 h-4 rounded-full" 
-                style={{ backgroundColor: sector.color }}
-              />
-              <span className="text-xs font-medium text-[#f5f5f0]">{sector.symbol}</span>
-            </div>
-            
-            {/* Bar Container */}
-            <div className="flex-1 h-6 bg-[#141414] rounded overflow-hidden relative">
-              {isPositive ? (
-                <div
-                  className="h-full rounded transition-all duration-500 group-hover:opacity-80"
-                  style={{ 
-                    width: `${width}%`,
-                    backgroundColor: '#d4a5ff'
-                  }}
-                />
-              ) : (
-                <div
-                  className="h-full rounded transition-all duration-500 group-hover:opacity-80"
-                  style={{ 
-                    width: `${width}%`,
-                    backgroundColor: '#ffb74d'
-                  }}
-                />
-              )}
-            </div>
-            
-            {/* Value */}
-            <div className="w-20 text-right">
-              <span className={`text-xs font-mono ${isPositive ? 'text-[#d4a5ff]' : 'text-[#ffb74d]'}`}>
-                {isPositive ? '+' : ''}{(sector.moneyFlow / 1e6).toFixed(0)}M
-              </span>
-            </div>
-          </div>
-        );
-      })}
-      
-      {/* Summary */}
-      <div className="mt-6 pt-4 border-t border-[#2a2a2a] grid grid-cols-2 gap-4">
+
+      <ReactECharts
+        option={option}
+        style={{ height: 560 }}
+        opts={{ renderer: 'canvas' }}
+      />
+
+      {/* Summary row */}
+      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#1e1e1e] text-center">
         <div>
-          <div className="text-xs text-[#666666] mb-1">Total Inflow</div>
-          <div className="text-lg font-medium text-[#d4a5ff]">
-            +{(chartData.inflows.reduce((a, b) => a + b.moneyFlow, 0) / 1e9).toFixed(2)}B
+          <div className="text-xs text-[#555] mb-1">总流入</div>
+          <div className="text-base font-mono font-semibold text-[#4ade80]">
+            {formatFlow(summary.totalIn)}
           </div>
         </div>
         <div>
-          <div className="text-xs text-[#666666] mb-1">Total Outflow</div>
-          <div className="text-lg font-medium text-[#ffb74d]">
-            {(chartData.outflows.reduce((a, b) => a + b.moneyFlow, 0) / 1e9).toFixed(2)}B
+          <div className="text-xs text-[#555] mb-1">净流向</div>
+          <div
+            className="text-base font-mono font-semibold"
+            style={{ color: summary.net >= 0 ? '#4ade80' : '#f87171' }}
+          >
+            {formatFlow(summary.net)}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-[#555] mb-1">总流出</div>
+          <div className="text-base font-mono font-semibold text-[#f87171]">
+            {formatFlow(-summary.totalOut)}
           </div>
         </div>
       </div>

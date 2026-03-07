@@ -11,17 +11,52 @@ from datetime import datetime, timedelta
 import yfinance as yf
 
 SECTOR_ETFS = {
-    'XLK': 'Technology',
-    'XLF': 'Financials', 
-    'XLV': 'Healthcare',
-    'XLE': 'Energy',
-    'XLI': 'Industrials',
-    'XLP': 'Consumer Staples',
-    'XLU': 'Utilities',
+    # Market Core
+    'SPY':  'S&P 500',
+    'QQQ':  'Nasdaq 100',
+    'IWM':  'Russell 2000',
+    'VUG':  'Growth',
+    'VTV':  'Value',
+    # 11 Standard SPDR Sectors
+    'XLK':  'Technology',
+    'XLF':  'Financials',
+    'XLE':  'Energy',
+    'XLI':  'Industrials',
+    'XLV':  'Healthcare',
+    'XLY':  'Consumer Disc.',
+    'XLP':  'Consumer Staples',
+    'XLU':  'Utilities',
+    'XLB':  'Materials',
     'XLRE': 'Real Estate',
-    'XLC': 'Communication',
-    'XLB': 'Materials',
-    'SPY': 'S&P 500'
+    'XLC':  'Communication',
+    # Tech & Semiconductors
+    'SMH':  'Semiconductors',
+    'SOXX': 'Semiconductors (iS)',
+    'XSD':  'Semi Equipment',
+    'IGV':  'Software',
+    'SKYY': 'Cloud Computing',
+    'WCLD': 'Cloud SaaS',
+    'AIQ':  'AI & Big Data',
+    'CIBR': 'Cybersecurity',
+    'HACK': 'Cybersecurity (PH)',
+    # AI & Robotics
+    'BOTZ': 'Robotics & AI',
+    'ROBO': 'Robotics',
+    'IRBO': 'AI & Robotics',
+    # Defense
+    'ITA':  'Aerospace & Defense',
+    'XAR':  'Aerospace',
+    # Energy
+    'URA':  'Uranium / Nuclear',
+    'TAN':  'Solar Energy',
+    # AI Infrastructure
+    'SRVR': 'Data Centers',
+    'PAVE': 'Infrastructure',
+    'GRID': 'Electric Grid',
+    # Future Tech
+    'ARKK': 'Disruptive Innovation',
+    'QTUM': 'Quantum Computing',
+    'DRIV': 'Autonomous Driving',
 }
 
 def fetch_sector_data(period='1mo'):
